@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure User Authentication Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        h1 {
+            text-align: center;
+        }
+        h2 {
+            border-bottom: 3px solid #a7b5c7;
+            padding-bottom: 0.5rem;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        label {
+            font-weight: 600;
+            color: #475569;
+        }
+        input[type="text"], input[type="password"] {
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            background-color: #f8fafc;
+            width: 100%;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        input[type="text"]:focus, input[type="password"]:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            outline: none;
+        }
+        button {
+            background-image: linear-gradient(to right, grey, grey);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.2), 0 3px 7px -3px rgba(0, 0, 0, 0.1);
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+        button:hover {
+            color: white;
+            background-image: linear-gradient(to right, #008CBA, #008CBA);
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button:disabled {
+            background-image: none;
+            background-color: #94a3b8;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        .output-section {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+        .output-section pre {
+            background-color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            white-space: pre-wrap; /* Allows text to wrap */
+            word-wrap: break-word; /* Breaks long words */
+            font-size: 0.875rem;
+            color: #1e293b;
+            margin-top: 0.5rem;
+        }
+        .output-section p {
+            margin-bottom: 0.5rem;
+        }
+        .status-success {
+            color: #10b981;
+            font-weight: 600;
+        }
+        .status-fail {
+            color: #ef4444;
+            font-weight: 600;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        th {
+            background-color: #e2e8f0;
+            font-weight: 600;
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .message-box {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            max-width: 400px;
+            text-align: center;
+        }
+        .message-box button {
+            background-color: #4f46e5;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Secure User Authentication Demo</h1>
+
+        <div class="flex flex-col md:flex-row gap-6">
+            <!-- Registration Section -->
+            <div class="flex-1">
+                <h2>1. Register User</h2>
+                <div class="input-group">
+                    <label for="regUsername">Username:</label>
+                    <input type="text" id="regUsername" placeholder="Enter username">
+                </div>
+                <div class="input-group">
+                    <label for="regPassword">Password:</label>
+                    <input type="password" id="regPassword" placeholder="Enter password">
+                </div>
+                <button id="registerBtn">Register</button>
+
+                <div id="regDetails" class="output-section hidden mt-6">
+                    <h3>Registration Details:</h3>
+                    <p><strong>Status:</strong> <span id="regStatus"></span></p>
+                    <p><strong>Technical Details (PBKDF2 Hashing):</strong></p>
+                    <pre id="regTechnicalDetails"></pre>
+                </div>
+            </div>
+
+            <!-- Login Section -->
+            <div class="flex-1">
+                <h2>2. Login User</h2>
+                <div class="input-group">
+                    <label for="loginUsername">Username:</label>
+                    <input type="text" id="loginUsername" placeholder="Enter username">
+                </div>
+                <div class="input-group">
+                    <label for="loginPassword">Password:</label>
+                    <input type="password" id="loginPassword" placeholder="Enter password">
+                </div>
+                <button id="loginBtn">Login</button>
+
+                <div id="loginDetails" class="output-section hidden mt-6">
+                    <h3>Login Details:</h3>
+                    <p><strong>Status:</strong> <span id="loginStatus"></span></p>
+                    <p><strong>Technical Details (PBKDF2 Verification):</strong></p>
+                    <pre id="loginTechnicalDetails"></pre>
+                </div>
+            </div>
+        </div>
+
+        <div id="loadingSpinner" class="loading-spinner"></div>
+
+        <div id="performanceMetrics" class="output-section hidden">
+            <h2>Overall Performance Metrics:</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Registration (Hashing)</th>
+                        <th>Login (Verification)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Latency (ms)</td>
+                        <td id="perfRegLatency"></td>
+                        <td id="perfLoginLatency"></td>
+                    </tr>
+                    <tr>
+                        <td>Throughput (MB/s)</td>
+                        <td id="perfRegThroughput"></td>
+                        <td id="perfLoginThroughput"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="text-sm text-gray-500 mt-2">*Note: Latency and throughput are based on PBKDF2 iterations and simulated processing times.</p>
+        </div>
+
+        <div id="messageBox" class="message-box">
+            <p id="messageText"></p>
+            <button onclick="document.getElementById('messageBox').style.display = 'none';">OK</button>
+        </div>
+    </div>
+
+    <script>
+        // Define the base URL for your Flask backend
+        const FLASK_BASE_URL = 'http://127.0.0.1:5000'; // Or http://localhost:5000
+        // Conceptual size of password data processed per operation for MB/s conversion
+        const CONCEPTUAL_PASSWORD_SIZE_BYTES = 1024; // 1 KB per password operation
+
+        const regUsernameInput = document.getElementById('regUsername');
+        const regPasswordInput = document.getElementById('regPassword');
+        const registerBtn = document.getElementById('registerBtn');
+        const regDetailsSection = document.getElementById('regDetails');
+        const regStatusSpan = document.getElementById('regStatus');
+        const regTechnicalDetailsPre = document.getElementById('regTechnicalDetails');
+
+        const loginUsernameInput = document.getElementById('loginUsername');
+        const loginPasswordInput = document.getElementById('loginPassword');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginDetailsSection = document.getElementById('loginDetails');
+        const loginStatusSpan = document.getElementById('loginStatus');
+        const loginTechnicalDetailsPre = document.getElementById('loginTechnicalDetails');
+
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const performanceMetricsSection = document.getElementById('performanceMetrics');
+        const perfRegLatencySpan = document.getElementById('perfRegLatency');
+        const perfRegThroughputSpan = document.getElementById('perfRegThroughput');
+        const perfLoginLatencySpan = document.getElementById('perfLoginLatency');
+        const perfLoginThroughputSpan = document.getElementById('perfLoginThroughput');
+
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+
+        function showMessage(message) {
+            messageText.textContent = message;
+            messageBox.style.display = 'flex';
+        }
+
+        function setLoading(isLoading) {
+            if (isLoading) {
+                loadingSpinner.style.display = 'block';
+                registerBtn.disabled = true;
+                loginBtn.disabled = true;
+            } else {
+                loadingSpinner.style.display = 'none';
+                registerBtn.disabled = false;
+                loginBtn.disabled = false;
+            }
+        }
+
+        registerBtn.addEventListener('click', async () => {
+            const username = regUsernameInput.value.trim();
+            const password = regPasswordInput.value.trim();
+
+            if (!username || !password) {
+                showMessage("Please enter both username and password for registration.");
+                return;
+            }
+
+            setLoading(true);
+            regDetailsSection.classList.remove('hidden');
+            regStatusSpan.textContent = 'Processing...';
+            regStatusSpan.className = ''; // Clear previous status class
+            regTechnicalDetailsPre.textContent = 'Hashing password...';
+
+            try {
+                const response = await fetch(`${FLASK_BASE_URL}/register_user`, { // Use absolute URL
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (!response.ok) { // Check if the HTTP status is OK (200-299)
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    regStatusSpan.textContent = 'Success!';
+                    regStatusSpan.className = 'status-success';
+                    regTechnicalDetailsPre.textContent = `Generated Salt (Base64): ${result.technical_details.salt_b64}\n` +
+                                                        `PBKDF2 Hashed Password (Base64): ${result.technical_details.hashed_password_b64}\n` +
+                                                        `PBKDF2 Iterations: ${result.technical_details.iterations}`;
+
+                    perfRegLatencySpan.textContent = `${result.performance.latency_ms} ms`;
+                    const perfRegThroughputMbps = (result.performance.throughput_ops_s * CONCEPTUAL_PASSWORD_SIZE_BYTES) / (1024 * 1024);
+                    perfRegThroughputSpan.textContent = `${perfRegThroughputMbps.toFixed(4)} MB/s`;
+                    performanceMetricsSection.classList.remove('hidden');
+
+                    showMessage(`User '${username}' registered successfully!`);
+                } else {
+                    regStatusSpan.textContent = 'Failed!';
+                    regStatusSpan.className = 'status-fail';
+                    regTechnicalDetailsPre.textContent = result.message;
+                    showMessage(`Registration failed: ${result.message}`);
+                }
+            } catch (error) {
+                regStatusSpan.textContent = 'Error!';
+                regStatusSpan.className = 'status-fail';
+                regTechnicalDetailsPre.textContent = `An error occurred: ${error.message}`;
+                showMessage(`An error occurred during registration: ${error.message}`);
+                console.error('Registration error:', error);
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        loginBtn.addEventListener('click', async () => {
+            const username = loginUsernameInput.value.trim();
+            const password = loginPasswordInput.value.trim();
+
+            if (!username || !password) {
+                showMessage("Please enter both username and password for login.");
+                return;
+            }
+
+            setLoading(true);
+            loginDetailsSection.classList.remove('hidden');
+            loginStatusSpan.textContent = 'Processing...';
+            loginStatusSpan.className = ''; // Clear previous status class
+            loginTechnicalDetailsPre.textContent = 'Verifying password...';
+
+            try {
+                const response = await fetch(`${FLASK_BASE_URL}/verify_password`, { // Use absolute URL
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password_attempt: password })
+                });
+
+                if (!response.ok) { // Check if the HTTP status is OK (200-299)
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    loginStatusSpan.textContent = 'Login Successful!';
+                    loginStatusSpan.className = 'status-success';
+                    loginTechnicalDetailsPre.textContent = `Retrieved Salt (Base64): ${result.technical_details.retrieved_salt_b64}\n` +
+                                                          `Re-hashed Attempt (Base64): ${result.technical_details.rehashed_attempt_b64}\n` +
+                                                          `PBKDF2 Iterations: ${result.technical_details.iterations}`;
+
+                    perfLoginLatencySpan.textContent = `${result.latency_ms} ms`;
+                    const perfLoginThroughputMbps = (result.throughput_ops_s * CONCEPTUAL_PASSWORD_SIZE_BYTES) / (1024 * 1024);
+                    perfLoginThroughputSpan.textContent = `${perfLoginThroughputMbps.toFixed(4)} MB/s`;
+                    performanceMetricsSection.classList.remove('hidden');
+
+                    showMessage(`Welcome, ${username}!`);
+                } else {
+                    loginStatusSpan.textContent = 'Login Failed!';
+                    loginStatusSpan.className = 'status-fail';
+                    loginTechnicalDetailsPre.textContent = result.message;
+                    showMessage(`Login failed: ${result.message}`);
+                }
+            } catch (error) {
+                loginStatusSpan.textContent = 'Error!';
+                loginStatusSpan.className = 'status-fail';
+                loginTechnicalDetailsPre.textContent = `An error occurred: ${error.message}`;
+                showMessage(`An error occurred during login: ${error.message}`);
+                console.error('Login error:', error);
+            } finally {
+                setLoading(false);
+            }
+        });
+    </script>
+</body>
+</html>
