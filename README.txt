@@ -1,7 +1,7 @@
 Cryptographic 3 Scenarios Demo
 
 
-### Scenario 1: Secure User Authentication (Python Only)
+### Scenario 1: Secure End-to-End Encrypted Messaging (Python Only)
 
 **Description:** Demonstrates password hashing (PBKDF2) and verification.
 **Files:** `Scenario_1.py`
